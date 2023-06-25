@@ -38,17 +38,17 @@ struct VoxelConfig {
   const float ktop_border;
   const float kr_lower;
   const float kr_upper;
+  const float kx_scale;
+  const float ky_scale;
+  const int kmax_num_point_pillar;
+  const int kmax_num_point;
+  const int kdim;
+  const int kx_length;
+  const int ky_width;
   const float kx_range;
   const float ky_range;
   const float kz_range;
   const float kr_range;
-  const float kx_scale;
-  const float ky_scale;
-  const int kx_length;
-  const int ky_width;
-  const int kmax_num_point_pillar;
-  const int kmax_num_point;
-  const int kdim;
 
   std::vector<int> kmax_num_point_pillar_vec = {
       0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
@@ -117,13 +117,13 @@ private:
   void Reset();
 
 private:
-  VoxelConfig *config_;
+  VoxelConfig *config_{nullptr};
 
-  float *pointcloud_data_;
-  float *voxel_data_;
-  int8_t *features_s8_;
+  float *pointcloud_data_{nullptr};
+  float *voxel_data_{nullptr};
+  int8_t *features_s8_{nullptr};
 
-  int voxel_num_;
+  int voxel_num_{0};
 };
 
 }  // namespace centerpoint

@@ -15,13 +15,12 @@
 #include "postprocess.h"
 #include "utils/box3d_nms.h"
 
+#include <rclcpp/rclcpp.hpp>
 #include <queue>
 #include <cmath>
 
 namespace hobot {
 namespace centerpoint {
-
-float quanti_scale(int32_t data, float scale) { return data * scale; }
 
 void CenterPointPostProcess::HeatmapDequantizeScale(int *valid_shape,
                             int *aligned_shape,
@@ -30,7 +29,7 @@ void CenterPointPostProcess::HeatmapDequantizeScale(int *valid_shape,
                             int32_t *input,
                             std::vector<ScoresData> &output) {
   int kWC = aligned_shape[2] * aligned_shape[3];
-  int kHW = valid_shape[1] * valid_shape[2];
+  // int kHW = valid_shape[1] * valid_shape[2];
   for (int c = 0; c < valid_shape[3]; ++c) {
     std::priority_queue<ScoresData,
                         std::vector<ScoresData>,
@@ -38,7 +37,7 @@ void CenterPointPostProcess::HeatmapDequantizeScale(int *valid_shape,
         queue;
     for (int h = 0; h < valid_shape[1]; ++h) {
       for (int w = 0; w < valid_shape[2]; w++) {
-        float data_tmp =
+        float data_tmp = 
             quanti_scale(input[h * kWC + w * aligned_shape[3] + c], scale[c]);
         float value = 1.0f / (std::exp(-data_tmp) + 1.0f);
         queue.push(ScoresData(value, c, w, h));
@@ -56,7 +55,7 @@ void CenterPointPostProcess::HeatmapDequantizeScale(int *valid_shape,
 
 std::vector<std::vector<float>> CenterPointPostProcess::xywhr2xyxyr(std::vector<Lidar3D> &Bboxes) {
   std::vector<std::vector<float>> boxes(Bboxes.size(), std::vector<float>(5));
-  for (int i = 0; i < Bboxes.size(); i++) {
+  for (size_t i = 0; i < Bboxes.size(); i++) {
     boxes[i][0] = Bboxes[i].xs - Bboxes[i].dim_0 * 0.5f;
     boxes[i][1] = Bboxes[i].ys - Bboxes[i].dim_1 * 0.5f;
     boxes[i][2] = Bboxes[i].xs + Bboxes[i].dim_0 * 0.5f;
@@ -142,11 +141,11 @@ int CenterPointPostProcess::OutputPostProcess(
                             const std::shared_ptr<hobot::dnn_node::DnnNodeOutput>& node_output,
                             std::shared_ptr<Perception>& result) {
   std::vector<std::shared_ptr<DNNTensor>> &tensors = node_output->output_tensors;
-  for (int i = 0; i < tensors.size(); i++) {
+  for (size_t i = 0; i < tensors.size(); i++) {
     hbSysFlushMem(&(tensors[i]->sysMem[0]), HB_SYS_MEM_CACHE_INVALIDATE);
   }
 
-  int kHW = width_ * height_;
+  // int kHW = width_ * height_;
   int aligned_WC = width_ * aligned_c_;
   int task_cls{0};
 
@@ -167,7 +166,6 @@ int CenterPointPostProcess::OutputPostProcess(
                            topk_,
                            heatmap_data,
                            heatmaps);
-
     std::vector<ScoresData> heatmap;
     std::stable_sort(heatmaps.begin(), heatmaps.end(), CompareScoresData());
     for (auto &heat : heatmaps) {
@@ -176,7 +174,6 @@ int CenterPointPostProcess::OutputPostProcess(
       }
     }
     int32_t score_size = heatmap.size();
-
     // rot
     int32_t *rot_data =
         reinterpret_cast<int32_t *>(tensors[i * 6 + 3]->sysMem->virAddr);
@@ -215,7 +212,6 @@ int CenterPointPostProcess::OutputPostProcess(
       xs.emplace_back((reg_0 + heatmap[k].w) * xs_weight + pc_range_[0]);
       ys.emplace_back((reg_1 + heatmap[k].h) * ys_weight + pc_range_[1]);
     }
-
     // mask
     std::vector<int32_t> indexes;
     std::vector<Lidar3D> Bbox;
@@ -229,12 +225,10 @@ int CenterPointPostProcess::OutputPostProcess(
         indexes.emplace_back(k);
       }
     }
-
     Bbox.resize(indexes.size());
     scores.resize(indexes.size());
     cls.resize(indexes.size());
-
-    for (int32_t j = 0; j < indexes.size(); j++) {
+    for (size_t j = 0; j < indexes.size(); j++) {
       int32_t k = indexes[j];
       int32_t w = heatmap[k].w;
       int32_t h = heatmap[k].h;
@@ -262,7 +256,6 @@ int CenterPointPostProcess::OutputPostProcess(
       scores[j] = heatmap[k].value;
       cls[j] = heatmap[k].c;
     }
-
     std::vector<int32_t> selected_idxs;
 
     if (Bbox.size() > 0) {
@@ -275,7 +268,7 @@ int CenterPointPostProcess::OutputPostProcess(
                  post_max_size_);
 
       if (selected_idxs.size() > 0) {
-        for (int32_t s = 0; s < selected_idxs.size(); s++) {
+        for (size_t s = 0; s < selected_idxs.size(); s++) {
           int k = selected_idxs[s];
           Bbox[k].height = Bbox[k].height - Bbox[k].dim_2 * 0.5f;
           result->lidar3d.emplace_back(
@@ -285,7 +278,6 @@ int CenterPointPostProcess::OutputPostProcess(
     }
     task_cls += num_cls;
   }
-
   if (result->lidar3d.size() == 0) {
     result->lidar3d.resize(6, LidarDetection3D{Lidar3D(), 0.0f, 0});
   }

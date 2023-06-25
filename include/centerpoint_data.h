@@ -113,7 +113,7 @@ struct Perception {
   friend std::ostream &operator<<(std::ostream &os, Perception &perception) {
     os << "[";
     auto &rlts = perception.lidar3d;
-      for (int i = 0; i < rlts.size(); i++) {
+      for (size_t i = 0; i < rlts.size(); i++) {
         if (i != 0) {
           os << ",";
         }

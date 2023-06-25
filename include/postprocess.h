@@ -54,26 +54,24 @@ struct CompareScoresData {
 
 class CenterPointPostProcess {
   public:
-    explicit CenterPointPostProcess() {
-
-    }
-
+    explicit CenterPointPostProcess() {}
     int OutputPostProcess(const std::shared_ptr<hobot::dnn_node::DnnNodeOutput>& node_output,
                             std::shared_ptr<Perception>& result);
 
   private:
     // int InitPostProcess(const std::string &config_file);
+    std::vector<std::vector<float>> xywhr2xyxyr(std::vector<Lidar3D> &Bboxes);
+    float quanti_scale(int32_t data, float scale) { return data * scale; }
     void HeatmapDequantizeScale(int *valid_shape,
                             int *aligned_shape,
                             float *scale,
                             int topk,
                             int32_t *input,
                             std::vector<ScoresData> &output);
-    std::vector<std::vector<float>> xywhr2xyxyr(std::vector<Lidar3D> &Bboxes);
 
   private:
     bool norm_bbox_{true};
-    int topk_{500};
+    int topk_{100};
     int out_size_factor_{4};
     float score_threshold_{0.1};
     int pre_max_size_{1000};

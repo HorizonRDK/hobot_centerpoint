@@ -57,8 +57,20 @@ Getting Started with Hobot CenterPoint Node
 | is_show             |     bool      | 是否进行渲染展示    |     否  |  true               |
 | is_loop             |     bool      | 本地回灌是否循环进行  |   否  |   true                |
 | pub_topic_name      |     string    | 发布的可视化图片话题名  |   否  | /hobot_centerpoint   |
+| lidar_pre_path      |     string    | 回灌的二进制文件所在路径 | 否  | config/hobot_centerpoint_data               |
 
 ## J5 Ubuntu系统上运行
+
+**准备回灌数据集**
+```shell
+# 板端下载数据集
+wget http://archive.sunrisepi.tech/TogetheROS/data/hobot_centerpoint_data.tar.gz
+
+# 解压缩
+tar -zxvf hobot_centerpoint_data.tar.gz
+
+# 解压完成后数据集在hobot_centerpoint_data路径下
+```
 
 **使用本地数据集回灌**
 
@@ -67,5 +79,8 @@ Getting Started with Hobot CenterPoint Node
 source /opt/tros/setup.bash
 
 # 启动运行脚本，并指定数据集路径
-ros2 launch hobot_centerpoint hobot_centerpoint_websocket.launch.py
+ros2 launch hobot_centerpoint hobot_centerpoint_websocket.launch.py lidar_pre_path:=hobot_centerpoint_data
 ```
+
+PC的WEB端输入板端IP地址`http://IP:8000`，展示回灌结果和实时渲染：
+![image](./config/render.jpg)

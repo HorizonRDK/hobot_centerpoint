@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <thread>
 
 #include "jsonutil.h"
 #include "dnn_node/dnn_node.h"
@@ -25,19 +26,22 @@
 #include "preprocess.h"
 #include "postprocess.h"
 #include "centerpoint_publisher.h"
+#include "utils/pc_queue.h"
 
 
 namespace hobot {
 namespace centerpoint {
 
 struct CenterPointNodeOutput : public hobot::dnn_node::DnnNodeOutput {
+  // std::vector<uint8_t> lidar_data;
   std::string lidar_files;
 };
 
-enum class ShowType {
-  None = 0,
-  WEB_NODE = 1,
-  FOXGLOVE = 2
+// 输入队列数据
+struct InputData {
+  std::vector<std::shared_ptr<DNNTensor>> input_tensors;
+  // std::vector<uint8_t> lidar_data;
+  std::string lidar_files;
 };
 
 class CenterPoint_Node : public hobot::dnn_node::DnnNode {
@@ -54,24 +58,32 @@ protected:
 
 private:
   void RunLocalFeedInfer();
+  void preprocessRun();
 
 private:
-  std::string model_file_ = "config/model/model.hbm";
-  std::string preprocess_config_file_ = "config/centerpoint_preprocess_5dim.json";
-  std::string lidar_list_file_ = "config/nuscenes_lidar/nuscenes_lidar.lst";
+  Model *model;
+  std::string model_file_{"config/model/model.hbm"};
+  std::string preprocess_config_file_{"config/centerpoint_preprocess_5dim.json"};
+  std::string lidar_list_file_{"config/test.lst"};
+  
+  // 雷达文件数据路径
+  // lidar_file_path = lidar_pre_path_ + (path in lidar_list_file_)
+  std::string lidar_pre_path_ = "config/hobot_centerpoint_data";
 
-  bool is_loop_ = true;
-  // int feed_type_ = 0;
-  std::vector<std::string> local_file_list;
+  bool is_loop_{true};
+  std::vector<std::string> local_file_list{};
+  std::shared_ptr<std::thread> preprocess_thread_;
+  PCQueue<InputData> local_feed_queue;
+  std::shared_ptr<PreProcess> preprocess_handle_{nullptr}; // 前处理
 
-  std::shared_ptr<PreProcess> preprocess_handle_ = nullptr;
-  std::shared_ptr<CenterPointPostProcess> postprocess_handle_ = nullptr;
+  std::shared_ptr<CenterPointPostProcess> postprocess_handle_{nullptr}; //后处理
 
-  // ShowType show_type = ShowType::WEB_NODE;
-  bool is_show_ = true;
-  std::string pub_topic_name = "/hobot_centerpoint";
-  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr centerpoint_pub_ = nullptr;
-  std::shared_ptr<Centerpoint_Publisher> sp_publisher = nullptr;
+  bool is_show_{true};
+  std::string pub_topic_name{"/hobot_centerpoint"};
+
+  // 发布
+  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr centerpoint_pub_{nullptr};
+  std::shared_ptr<Centerpoint_Publisher> sp_publisher{nullptr};
 };
 
 }  // namespace centerpoint

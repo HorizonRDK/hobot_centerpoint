@@ -25,16 +25,16 @@ CenterPoint_Node::CenterPoint_Node(const std::string& node_name,
   this->declare_parameter<std::string>("lidar_list_file", lidar_list_file_);
   this->declare_parameter<bool>("is_show", is_show_);
   this->declare_parameter<bool>("is_loop", is_loop_);
-  // this->declare_parameter<int>("feed_type", feed_type_);
   this->declare_parameter<std::string>("pub_topic_name", pub_topic_name);
+  this->declare_parameter<std::string>("lidar_pre_path", lidar_pre_path_);
   
   this->get_parameter<std::string>("preprocess_config", preprocess_config_file_);
   this->get_parameter<std::string>("model_file", model_file_);
   this->get_parameter<std::string>("lidar_list_file", lidar_list_file_);
   this->get_parameter<bool>("is_show", is_show_);
   this->get_parameter<bool>("is_loop", is_loop_);
-  // this->get_parameter<int>("feed_type", feed_type_);
   this->get_parameter<std::string>("pub_topic_name", pub_topic_name);
+  this->get_parameter<std::string>("lidar_pre_path", lidar_pre_path_);
 
   RCLCPP_WARN_STREAM(rclcpp::get_logger("centerpoint_node"),
     "\n preprocess_config: " << preprocess_config_file_
@@ -42,8 +42,8 @@ CenterPoint_Node::CenterPoint_Node(const std::string& node_name,
     << "\n lidar_list_file: " << lidar_list_file_
     << "\n is_show: " << is_show_
     << "\n is_loop: " << is_loop_
-    // << "\n feed_type: " << feed_type_
-    << "\n pub_topic_name" << pub_topic_name);
+    << "\n pub_topic_name: " << pub_topic_name
+    << "\n lidar_pre_path: " << lidar_pre_path_);
 
   // Init中使用DNNNodeSample子类实现的SetNodePara()方法进行算法推理的初始化
   if (Init() != 0) {
@@ -51,7 +51,7 @@ CenterPoint_Node::CenterPoint_Node(const std::string& node_name,
     rclcpp::shutdown();
     return;
   }
-
+  model = GetModel();
   RunLocalFeedInfer();
 }
 
@@ -87,7 +87,6 @@ int CenterPoint_Node::PostProcess(
 
   // 后处理开始时间
   auto tp_start = std::chrono::system_clock::now();
-  RCLCPP_WARN(rclcpp::get_logger("CenterPoint_Node"), "post process start!");
   // 开始解析
   std::shared_ptr<Perception> det_result = std::make_shared<Perception>();
   postprocess_handle_->OutputPostProcess(node_output, det_result);
@@ -109,32 +108,30 @@ int CenterPoint_Node::PostProcess(
   auto sp_centerpoint_node_out = std::dynamic_pointer_cast<CenterPointNodeOutput>(node_output);
   if (sp_centerpoint_node_out) {
     if (is_show_) {
-      auto pub_start = std::chrono::system_clock::now();
-      RCLCPP_WARN(rclcpp::get_logger("CenterPoint_Node"), "begin publish result!");
       sp_publisher->publish(sp_centerpoint_node_out->lidar_files, det_result);
-      auto tp_now = std::chrono::system_clock::now();
-      auto interval = std::chrono::duration_cast<std::chrono::milliseconds>(
-                        tp_now - pub_start)
-                        .count();
-      RCLCPP_WARN(rclcpp::get_logger("CenterPoint_Node"), " publish over! time ms: %d", interval);
-      // std::stringstream result_log;
-      // result_log << std::setprecision(10) << sp_centerpoint_node_out->lidar_files << ":";
-      // for (auto &rst : det_result->lidar3d) {
-      //   if (rst.score < 4.0) {
-      //     continue;
-      //   }
-      //   result_log << rst.label << " " << rst.score << " " << rst.bbox.xs << " "
-      //             << rst.bbox.ys << " " << rst.bbox.height << " " << rst.bbox.dim_0
-      //             << " " << rst.bbox.dim_1 << " " << rst.bbox.dim_2 << " "
-      //             << rst.bbox.rot << " " << rst.bbox.vel_0 << " " << rst.bbox.vel_1
-      //             << "; ";
-      // }
+    }
+  }
+  return 0;
+}
+
+void CenterPoint_Node::preprocessRun() {
+  for (size_t i = 0; i < local_file_list.size(); i++) {
+    if(!rclcpp::ok()) {
+      return;
+    }
+    InputData data;
+    data.lidar_files = local_file_list[i];
+    // 输入预处理
+    preprocess_handle_->DoProcess(data.lidar_files, data.input_tensors, model);
+    local_feed_queue.put(data);
+    // 循环读取
+    if(is_loop_ && i + 1 == local_file_list.size()) {
+      i = 0;
     }
   }
 }
 
 void CenterPoint_Node::RunLocalFeedInfer() {
-  auto model = GetModel();
   if (!model) {
     RCLCPP_ERROR(rclcpp::get_logger("hobot_centerpoint"), "Invalid model!");
     rclcpp::shutdown();
@@ -142,38 +139,50 @@ void CenterPoint_Node::RunLocalFeedInfer() {
   }
 
   // 获取激光雷达本地输入文件
+  if (access(lidar_list_file_.c_str(), F_OK) != 0) {
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("hobot_centerpoint"),
+                      "File is not exist! lidar_list_file: " << lidar_list_file_);
+      rclcpp::shutdown();
+      return;
+  }
   std::ifstream ifs(lidar_list_file_);
   std::string lidar_file;
+  std::string file_path;
   while (std::getline(ifs, lidar_file)) {
-    if (access(lidar_file.c_str(), F_OK) != 0) {
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("hobot_centerpoint"),
-                        "File is not exist! lidar_file: " << lidar_file);
-        rclcpp::shutdown();
-        return;
-      }
-      local_file_list.push_back(lidar_file);
+    std::string file_path = lidar_pre_path_ + "/" + lidar_file;
+    if (access(file_path.c_str(), F_OK) != 0) {
+      RCLCPP_ERROR_STREAM(rclcpp::get_logger("hobot_centerpoint"),
+                      "File is not exist! lidar_file: " << file_path);
+      continue;
+    }
+    local_file_list.push_back(file_path);
   }
-  
-  for (size_t i = 0; i < local_file_list.size(); i++) {
-    std::vector<std::shared_ptr<DNNTensor>> input_tensors;
-    // 输入预处理
-    preprocess_handle_->DoProcess(local_file_list[i], input_tensors, model);
+  RCLCPP_WARN(rclcpp::get_logger("hobot_centerpoint"), 
+              "A total of %d files were fetched! ", local_file_list.size());
+
+  // 创建预处理线程
+  preprocess_thread_ = std::make_shared<std::thread>(&CenterPoint_Node::preprocessRun, this);
+
+  while (rclcpp::ok()) {
+    InputData input;
+    if (!local_feed_queue.get(input, 1000)) {
+      continue;
+    }
 
     std::vector<std::shared_ptr<hobot::dnn_node::OutputDescription>> output_descs{};
     auto dnn_output = std::make_shared<CenterPointNodeOutput>();
-    dnn_output->lidar_files = local_file_list[i];
+    dnn_output->lidar_files = input.lidar_files;
 
     // 模型推理开始
-    if (Run(input_tensors, output_descs, dnn_output, true, -1, -1) < 0) {
+    if (Run(input.input_tensors, output_descs, dnn_output, true, -1, -1) < 0) {
       RCLCPP_INFO(rclcpp::get_logger("hobot_centerpoint"), "Run infer fail!");
     }
 
-    // 循环读取
-    if(is_loop_ && i + 1 == local_file_list.size()) {
-      i = 0;
+    // 释放input_tensors
+    for (size_t i = 0; i < input.input_tensors.size(); i++) {
+      hbSysFreeMem(&(input.input_tensors[i]->sysMem[0]));
     }
   }
-  
 }
 
 } // namespace centerpoint

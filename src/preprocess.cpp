@@ -134,7 +134,7 @@ int PreProcess::InitPreProcessInfo(const std::string &config) {
 int32_t PreProcess::FetchBinary(std::string pointcloud_path,
                                                     float *buffer,
                                                     int32_t length) {
-  FILE *stream;
+  FILE *stream = nullptr;
   if (pointcloud_path.empty()) {
     RCLCPP_ERROR(rclcpp::get_logger("hobot_centerpoint"),
                 "bin file: %s is empty!", pointcloud_path.c_str());
@@ -281,16 +281,12 @@ int32_t PreProcess::DoProcess(std::string path,
   Reset();
   int32_t num_points =
       FetchBinary(path, pointcloud_data_, 300000 * config_->kdim);
-
   if (num_points == -1) {
     RCLCPP_ERROR(rclcpp::get_logger("hobot_centerpoint"), "Read file: %s error.", path.c_str());
     return -1;
   }
 
   auto input_count = pmodel->GetInputCount();
-  // auto &tensors = input_tensors;
-
-  // input_tensors.resize(input_count);
 
   for (int i = 0; i < input_count; i++) {
     auto input = std::make_shared<DNNTensor>();

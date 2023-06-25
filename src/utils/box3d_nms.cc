@@ -35,7 +35,7 @@ void Lidar3DNMS(std::vector<int> &keep_res,
   std::vector<float> scores_order_res;
 
   std::vector<std::pair<float, int>> tmp_scores;
-  for (int i = 0; i < scores.size(); ++i) {
+  for (size_t i = 0; i < scores.size(); ++i) {
     tmp_scores.emplace_back(scores[i], i);
   }
   std::sort(tmp_scores.begin(), tmp_scores.end(), Compare);
@@ -48,7 +48,7 @@ void Lidar3DNMS(std::vector<int> &keep_res,
       scores_order_res.push_back(scores[tmp_num]);
     }
   } else {
-    for (int i = 0; i < tmp_scores.size(); i++) {
+    for (size_t i = 0; i < tmp_scores.size(); i++) {
       int tmp_num = tmp_scores[i].second;
       order.push_back(tmp_num);
       boxes_order_res.push_back(boxes[tmp_num]);
@@ -62,7 +62,7 @@ void Lidar3DNMS(std::vector<int> &keep_res,
   std::vector<std::vector<float>> boxes_res(boxes.size(),
                                             std::vector<float>(5, 0));
   // torch.stack
-  for (int i = 0; i < boxes_order_res.size(); i++) {
+  for (size_t i = 0; i < boxes_order_res.size(); i++) {
     boxes_res[i][0] = (boxes_order_res[i][0] + boxes_order_res[i][2]) / 2;
     boxes_res[i][1] = (boxes_order_res[i][1] + boxes_order_res[i][3]) / 2;
     boxes_res[i][2] = (boxes_order_res[i][2] - boxes_order_res[i][0]);
@@ -78,7 +78,7 @@ void Lidar3DNMS(std::vector<int> &keep_res,
       keep_res.push_back(order[keep[i]]);
     }
   } else {
-    for (int i = 0; i < keep.size(); i++) {
+    for (size_t i = 0; i < keep.size(); i++) {
       keep_res.push_back(order[keep[i]]);
     }
   }
@@ -89,13 +89,13 @@ void Lidar3DNmsRotated(std::vector<int> &keep,
                        std::vector<float> &scores,
                        float iou_threshold) {
   std::vector<std::pair<float, int>> tmp_scores;
-  for (int i = 0; i < scores.size(); ++i) {
+  for (size_t i = 0; i < scores.size(); ++i) {
     tmp_scores.emplace_back(scores[i], i);
   }
   std::sort(tmp_scores.begin(), tmp_scores.end(), Compare);
 
   std::vector<int> order_t;
-  for (int i = 0; i < tmp_scores.size(); i++) {
+  for (size_t i = 0; i < tmp_scores.size(); i++) {
     order_t.push_back(tmp_scores[i].second);
   }
 
@@ -110,7 +110,7 @@ void Lidar3DNmsRotated(std::vector<int> &keep,
     suppressed[i] = suppressed_t[i][0];
     keep[i] = keep_t[i][0];
   }
-  for (int i = 0; i < order_t.size(); i++) {
+  for (size_t i = 0; i < order_t.size(); i++) {
     order[i] = order_t[i];
   }
 

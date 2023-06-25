@@ -156,7 +156,7 @@ int Centerpoint_Publisher::LoadLidarFile(std::string &pointclude_file, cv::Mat &
       *(smallest_x) < 0.0f ? std::ceil(std::abs(*(smallest_x))) + 10.f : 10.f;
 
   // 5. +offset
-  for (int i = 0; i < points_y.size(); ++i) {
+  for (size_t i = 0; i < points_y.size(); ++i) {
     points_y[i] += width_offset;
     points_x[i] += height_offset;
   }
@@ -171,7 +171,7 @@ int Centerpoint_Publisher::LoadLidarFile(std::string &pointclude_file, cv::Mat &
                 CV_8UC3,
                 cv::Scalar(255, 255, 255));
 
-  for (int i = 0; i < points_x.size(); ++i) {
+  for (size_t i = 0; i < points_x.size(); ++i) {
     image.at<cv::Vec3b>(
         cv::Point2f(points_y[i] * width_resize,
                     (height - points_x[i]) * height_resize))[0] = 255;
@@ -195,7 +195,7 @@ int Centerpoint_Publisher::Draw_perception(std::shared_ptr<Perception> &percepti
   std::vector<float> angles;
   std::vector<float> scores;
 
-  for (int i = 0; i < dets.size(); ++i) {
+  for (size_t i = 0; i < dets.size(); ++i) {
     float x = dets[i].bbox.xs;
     float y = dets[i].bbox.ys;
     float z = dets[i].bbox.height;
@@ -289,7 +289,7 @@ int Centerpoint_Publisher::Draw_perception(std::shared_ptr<Perception> &percepti
   float score_thresh = 0.4;
   std::vector<float> box(16, 0);
 
-  for (int idx = 0; idx < angles.size(); ++idx) {
+  for (size_t idx = 0; idx < angles.size(); ++idx) {
     for (int p = 0; p < 8; ++p) {
       box[p * 2 + 0] = corners[idx * 8 * 3 + p * 3 + 0];
       box[p * 2 + 1] = corners[idx * 8 * 3 + p * 3 + 1];
@@ -339,8 +339,8 @@ int Centerpoint_Publisher::Draw_perception(std::shared_ptr<Perception> &percepti
         1,
         cv::LINE_AA);
   }
+  return 0;
 }
-
 
 } // namespace centerpoint
 } // namespace hobot
