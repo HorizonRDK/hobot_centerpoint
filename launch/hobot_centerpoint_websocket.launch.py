@@ -14,6 +14,9 @@ def generate_launch_description():
     lidar_pre_path_launch_arg = DeclareLaunchArgument(
         "lidar_pre_path", default_value=TextSubstitution(text="./config/hobot_centerpoint_data")
     )
+    is_loop_launch_arg = DeclareLaunchArgument(
+        "is_loop", default_value=TextSubstitution(text="False")
+    )
 
     # 拷贝config中文件
     hobot_centerpoint_path = os.path.join(
@@ -30,12 +33,29 @@ def generate_launch_description():
         output='screen',
         parameters=[
             {"is_show": True},
-            {"is_loop": True},
+            {"is_loop": LaunchConfiguration('is_loop')},
             {"lidar_pre_path": LaunchConfiguration('lidar_pre_path')},
             {"lidar_list_file": "config/test.lst"}
         ],
         arguments=['--ros-args', '--log-level', 'error']
     )
+
+    # jpeg图片编码&发布pkg
+    # jpeg_codec_node = Node(
+    #     package='hobot_codec',
+    #     executable='hobot_codec_republish',
+    #     output='screen',
+    #     parameters=[
+    #         {"channel": 1},
+    #         {"in_mode": "ros"},
+    #         {"in_format": "bgr8"},
+    #         {"out_mode": "ros"},
+    #         {"out_format": "jpeg"},
+    #         {"sub_topic": "/hobot_centerpoint"},
+    #         {"pub_topic": "/image"}
+    #     ],
+    #     arguments=['--ros-args', '--log-level', 'error']
+    # )
 
     # web展示pkg
     web_node = Node(
@@ -52,6 +72,8 @@ def generate_launch_description():
 
     return LaunchDescription([
         lidar_pre_path_launch_arg,
+        is_loop_launch_arg,
         hobot_centerpoint_node,
+        # jpeg_codec_node,
         web_node
     ])

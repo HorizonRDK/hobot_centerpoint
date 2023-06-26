@@ -16,6 +16,9 @@
 #include <fstream>
 #include <iostream>
 
+#define PUBIMAGE_WIDTH 1920
+#define PUBIMAGE_HEIGHT 1440
+
 int read_binary_file(std::string &file_path, char **bin, int *length) {
   std::ifstream ifs(file_path.c_str(), std::ios::in | std::ios::binary);
   if (!ifs) {
@@ -75,16 +78,36 @@ Centerpoint_Publisher::Centerpoint_Publisher(rclcpp::Publisher<sensor_msgs::msg:
 }
 
 int Centerpoint_Publisher::publish(std::string &pointclude_file, std::shared_ptr<Perception> &perception) {
-  cv::Mat image;
+  cv::Mat ori_image;
   float width_offset = 0.0;
   float height_offset = 0.0;
   int width_resize = 0;
   int height_resize = 0;
   int width = 0;
   int height = 0;
-  LoadLidarFile(pointclude_file, image, width_offset, height_offset, width_resize, height_resize, width, height);
-  Draw_perception(perception, image, width_offset, height_offset, width_resize, height_resize, width, height);
+  LoadLidarFile(pointclude_file, ori_image, width_offset, height_offset, width_resize, height_resize, width, height);
+  Draw_perception(perception, ori_image, width_offset, height_offset, width_resize, height_resize, width, height);
 
+  cv::Mat image(PUBIMAGE_HEIGHT, PUBIMAGE_WIDTH, ori_image.type());
+  if (ori_image.cols > PUBIMAGE_WIDTH && ori_image.rows > PUBIMAGE_HEIGHT) {
+    int crop_x1 = (ori_image.cols - PUBIMAGE_WIDTH) / 2;
+    int crop_y1 = (ori_image.rows - PUBIMAGE_HEIGHT) / 2;
+    int crop_x2 = crop_x1 + PUBIMAGE_WIDTH;
+    int crop_y2 = crop_y1 + PUBIMAGE_HEIGHT;
+    image = ori_image(cv::Range(crop_y1, crop_y2), cv::Range(crop_x1, crop_x2));
+  } else if (ori_image.cols > PUBIMAGE_WIDTH && ori_image.rows < PUBIMAGE_HEIGHT) {
+    int crop_x1 = (ori_image.cols - PUBIMAGE_WIDTH) / 2;
+    int crop_x2 = crop_x1 + PUBIMAGE_WIDTH;
+    cv::Mat temp = ori_image(cv::Range(0, ori_image.rows), cv::Range(crop_x1, crop_x2));
+    cv::resize(temp, image, image.size(), 0, 0);
+  } else if (ori_image.cols < PUBIMAGE_WIDTH && ori_image.rows > PUBIMAGE_HEIGHT) {
+    int crop_y1 = (ori_image.rows - PUBIMAGE_HEIGHT) / 2;
+    int crop_y2 = crop_y1 + PUBIMAGE_HEIGHT;
+    cv::Mat temp = ori_image(cv::Range(crop_y1, crop_y2), cv::Range(0, ori_image.cols));
+    cv::resize(temp, image, image.size(), 0, 0);
+  } else {
+    cv::resize(ori_image, image, image.size(), 0, 0);
+  }
   auto msg = sensor_msgs::msg::Image();
   struct timespec time_start = {0, 0};
   clock_gettime(CLOCK_REALTIME, &time_start);
@@ -93,7 +116,7 @@ int Centerpoint_Publisher::publish(std::string &pointclude_file, std::shared_ptr
   msg.encoding = "jpeg";
   msg.width = image.cols;
   msg.height = image.rows;
-
+  RCLCPP_ERROR(rclcpp::get_logger("hobot_centerpoint_pub"), "image.cols: %d image.rows: %d", image.cols, image.rows);
   // 使用opencv的imencode接口将mat转成vector，获取图片size
   std::vector<int> param;
   std::vector<uint8_t> jpeg;

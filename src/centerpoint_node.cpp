@@ -126,7 +126,7 @@ void CenterPoint_Node::preprocessRun() {
     local_feed_queue.put(data);
     // 循环读取
     if(is_loop_ && i + 1 == local_file_list.size()) {
-      i = 0;
+      i = -1;
     }
   }
 }

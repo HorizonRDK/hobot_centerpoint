@@ -67,9 +67,10 @@ Getting Started with Hobot CenterPoint Node
 wget http://archive.sunrisepi.tech/TogetheROS/data/hobot_centerpoint_data.tar.gz
 
 # 解压缩
-tar -zxvf hobot_centerpoint_data.tar.gz
+mkdir config
+tar -zxvf hobot_centerpoint_data.tar.gz -C config
 
-# 解压完成后数据集在hobot_centerpoint_data路径下
+# 解压完成后数据集在config/hobot_centerpoint_data路径下
 ```
 
 **使用本地数据集回灌**
@@ -79,7 +80,7 @@ tar -zxvf hobot_centerpoint_data.tar.gz
 source /opt/tros/setup.bash
 
 # 启动运行脚本，并指定数据集路径
-ros2 launch hobot_centerpoint hobot_centerpoint_websocket.launch.py lidar_pre_path:=hobot_centerpoint_data
+ros2 launch hobot_centerpoint hobot_centerpoint_websocket.launch.py lidar_pre_path:=config/hobot_centerpoint_data
 ```
 
 PC的WEB端输入板端IP地址`http://IP:8000`，展示回灌结果和实时渲染：
