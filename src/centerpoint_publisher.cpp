@@ -88,26 +88,18 @@ int Centerpoint_Publisher::publish(std::string &pointclude_file, std::shared_ptr
   LoadLidarFile(pointclude_file, ori_image, width_offset, height_offset, width_resize, height_resize, width, height);
   Draw_perception(perception, ori_image, width_offset, height_offset, width_resize, height_resize, width, height);
 
+  // 画布大小默认为1920 * 1080 ，需要将自车移动到画布最中间位置
   cv::Mat image(PUBIMAGE_HEIGHT, PUBIMAGE_WIDTH, ori_image.type());
-  if (ori_image.cols > PUBIMAGE_WIDTH && ori_image.rows > PUBIMAGE_HEIGHT) {
-    int crop_x1 = (ori_image.cols - PUBIMAGE_WIDTH) / 2;
-    int crop_y1 = (ori_image.rows - PUBIMAGE_HEIGHT) / 2;
-    int crop_x2 = crop_x1 + PUBIMAGE_WIDTH;
-    int crop_y2 = crop_y1 + PUBIMAGE_HEIGHT;
-    image = ori_image(cv::Range(crop_y1, crop_y2), cv::Range(crop_x1, crop_x2));
-  } else if (ori_image.cols > PUBIMAGE_WIDTH && ori_image.rows < PUBIMAGE_HEIGHT) {
-    int crop_x1 = (ori_image.cols - PUBIMAGE_WIDTH) / 2;
-    int crop_x2 = crop_x1 + PUBIMAGE_WIDTH;
-    cv::Mat temp = ori_image(cv::Range(0, ori_image.rows), cv::Range(crop_x1, crop_x2));
-    cv::resize(temp, image, image.size(), 0, 0);
-  } else if (ori_image.cols < PUBIMAGE_WIDTH && ori_image.rows > PUBIMAGE_HEIGHT) {
-    int crop_y1 = (ori_image.rows - PUBIMAGE_HEIGHT) / 2;
-    int crop_y2 = crop_y1 + PUBIMAGE_HEIGHT;
-    cv::Mat temp = ori_image(cv::Range(crop_y1, crop_y2), cv::Range(0, ori_image.cols));
-    cv::resize(temp, image, image.size(), 0, 0);
-  } else {
-    cv::resize(ori_image, image, image.size(), 0, 0);
-  }
+  int centerpoint_x = PUBIMAGE_WIDTH/2;
+  int centerpoint_y = PUBIMAGE_HEIGHT/2;
+  int offset_x = centerpoint_x - selfCar_point_x;
+  int offset_y = centerpoint_y - selfCar_point_y;
+  cv::Scalar colorborder(255, 255, 255);
+  cv::Mat warp_matrix = (cv::Mat_<float>(2, 3) <<
+        cos(0), -sin(0), offset_x,
+        sin(0), cos(0), offset_y);
+  cv::warpAffine(ori_image, image, warp_matrix, image.size(), cv::INTER_LINEAR, cv::BORDER_CONSTANT, colorborder);
+
   auto msg = sensor_msgs::msg::Image();
   struct timespec time_start = {0, 0};
   clock_gettime(CLOCK_REALTIME, &time_start);
@@ -116,7 +108,7 @@ int Centerpoint_Publisher::publish(std::string &pointclude_file, std::shared_ptr
   msg.encoding = "jpeg";
   msg.width = image.cols;
   msg.height = image.rows;
-  RCLCPP_ERROR(rclcpp::get_logger("hobot_centerpoint_pub"), "image.cols: %d image.rows: %d", image.cols, image.rows);
+
   // 使用opencv的imencode接口将mat转成vector，获取图片size
   std::vector<int> param;
   std::vector<uint8_t> jpeg;
@@ -124,9 +116,6 @@ int Centerpoint_Publisher::publish(std::string &pointclude_file, std::shared_ptr
   int32_t data_len = jpeg.size();
   msg.data.resize(data_len);
   memcpy(&msg.data[0], jpeg.data(), data_len);
-
-  // msg.data.resize(msg.width*msg.height*3);
-  // memcpy(&msg.data[0], image.ptr<uint8_t>(), msg.data.size());
 
   centerpoint_pub_->publish(msg);
   return 0;
@@ -147,7 +136,7 @@ int Centerpoint_Publisher::LoadLidarFile(std::string &pointclude_file, cv::Mat &
   std::vector<float> padding_points(element_size);
   memcpy(padding_points.data(), data_buffer, data_length);
   delete [] data_buffer;
-
+  
   // 2. remove padding
   int point_num = element_size / 5;
   std::vector<float> points_y;
@@ -178,12 +167,6 @@ int Centerpoint_Publisher::LoadLidarFile(std::string &pointclude_file, cv::Mat &
   height_offset =
       *(smallest_x) < 0.0f ? std::ceil(std::abs(*(smallest_x))) + 10.f : 10.f;
 
-  // 5. +offset
-  for (size_t i = 0; i < points_y.size(); ++i) {
-    points_y[i] += width_offset;
-    points_x[i] += height_offset;
-  }
-
   width = std::ceil((*(biggest_y) - *(smallest_y)) + 1.f) + 20;
   width_resize = 10;
   height = std::ceil((*(biggest_x) - *(smallest_x)) + 1.f) + 20;
@@ -196,17 +179,20 @@ int Centerpoint_Publisher::LoadLidarFile(std::string &pointclude_file, cv::Mat &
 
   for (size_t i = 0; i < points_x.size(); ++i) {
     image.at<cv::Vec3b>(
-        cv::Point2f(points_y[i] * width_resize,
-                    (height - points_x[i]) * height_resize))[0] = 255;
+        cv::Point2f((points_y[i] + width_offset) * width_resize,
+                    (height - (points_x[i] + height_offset)) * height_resize))[0] = 255;
     image.at<cv::Vec3b>(
-        cv::Point2f(points_y[i] * width_resize,
-                    (height - points_x[i]) * height_resize))[1] = 0;
+        cv::Point2f((points_y[i] + width_offset) * width_resize,
+                    (height - (points_x[i] + height_offset)) * height_resize))[1] = 0;
     image.at<cv::Vec3b>(
-        cv::Point2f(points_y[i] * width_resize,
-                    (height - points_x[i]) * height_resize))[2] = 0;
+        cv::Point2f((points_y[i] + width_offset) * width_resize,
+                    (height - (points_x[i] + height_offset)) * height_resize))[2] = 0;
   }
-  image_ = image;
 
+  selfCar_point_x = width_offset * width_resize;
+  selfCar_point_y = (height - height_offset) * height_resize;
+
+  image_ = image;
   return 0;
 }
 
@@ -343,7 +329,7 @@ int Centerpoint_Publisher::Draw_perception(std::shared_ptr<Perception> &percepti
     }
     // direction
     float length = 4;
-    float axis_rot = 0;//-0.5 * 3.141592653589793;
+    float axis_rot = 0;
     std::vector<float> box_xy(box.begin(), box.begin() + 8);
     float x0 = -(box_xy[0] + box_xy[2] + box_xy[4] + box_xy[6]) / 4.0;
     float y0 = (box_xy[1] + box_xy[3] + box_xy[5] + box_xy[7]) / 4.0;

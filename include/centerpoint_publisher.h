@@ -46,6 +46,10 @@ private:
                       int &width, int &height);
 
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr centerpoint_pub_ = nullptr;
+
+  // 自车在雷达图中的点位坐标, 输入的点云图不同，自车坐标会变化
+  int selfCar_point_x = 0.0;
+  int selfCar_point_y = 0.0;
 };
 
 } // namespace centerpoint
