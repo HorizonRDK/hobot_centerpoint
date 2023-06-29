@@ -18,7 +18,7 @@ def generate_launch_description():
         "lidar_list_file", default_value=TextSubstitution(text="./config/nuscenes_lidar_val.lst")
     )
     is_loop_launch_arg = DeclareLaunchArgument(
-        "is_loop", default_value=TextSubstitution(text="False")
+        "is_loop", default_value=TextSubstitution(text="True")
     )
 
     # 拷贝config中文件
@@ -40,7 +40,7 @@ def generate_launch_description():
             {"lidar_pre_path": LaunchConfiguration('lidar_pre_path')},
             {"lidar_list_file": LaunchConfiguration('lidar_list_file')}
         ],
-        arguments=['--ros-args', '--log-level', 'error']
+        arguments=['--ros-args', '--log-level', 'warn']
     )
 
     # jpeg图片编码&发布pkg

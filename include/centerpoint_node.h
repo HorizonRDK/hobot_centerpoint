@@ -34,7 +34,7 @@ namespace centerpoint {
 
 struct CenterPointNodeOutput : public hobot::dnn_node::DnnNodeOutput {
   // std::vector<uint8_t> lidar_data;
-  std::string lidar_files;
+  std::string lidar_files; // 二进制文件
 };
 
 // 输入队列数据
@@ -70,16 +70,16 @@ private:
   // lidar_file_path = lidar_pre_path_ + (path in lidar_list_file_)
   std::string lidar_pre_path_ = "config/hobot_centerpoint_data";
 
-  bool is_loop_{true};
-  std::vector<std::string> local_file_list{};
-  std::shared_ptr<std::thread> preprocess_thread_;
-  PCQueue<InputData> local_feed_queue;
-  std::shared_ptr<PreProcess> preprocess_handle_{nullptr}; // 前处理
+  bool is_loop_{true}; // 是否循环回灌
+  std::vector<std::string> local_file_list{}; // 回灌的本地二进制文件
+  std::shared_ptr<std::thread> preprocess_thread_; // 预处理线程
+  PCQueue<InputData> local_feed_queue; // 存放前处理后的回灌数据
+  std::shared_ptr<PreProcess> preprocess_handle_{nullptr}; // 前处理对象指针
 
-  std::shared_ptr<CenterPointPostProcess> postprocess_handle_{nullptr}; //后处理
+  std::shared_ptr<CenterPointPostProcess> postprocess_handle_{nullptr}; //后处理对象指针
 
-  bool is_show_{true};
-  std::string pub_topic_name{"/hobot_centerpoint"};
+  bool is_show_{true}; // 是否对结果进行渲染
+  std::string pub_topic_name{"/hobot_centerpoint"}; // 结果发布的topic
 
   // 发布
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr centerpoint_pub_{nullptr};

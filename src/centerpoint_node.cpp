@@ -51,8 +51,8 @@ CenterPoint_Node::CenterPoint_Node(const std::string& node_name,
     rclcpp::shutdown();
     return;
   }
-  model = GetModel();
-  RunLocalFeedInfer();
+  model = GetModel(); // 获取模型
+  RunLocalFeedInfer(); // 调用本地回灌
 }
 
 int CenterPoint_Node::SetNodePara() {
@@ -70,7 +70,7 @@ int CenterPoint_Node::SetNodePara() {
 
   preprocess_handle_ = std::make_shared<PreProcess>(preprocess_config_file_);
   postprocess_handle_ = std::make_shared<CenterPointPostProcess>();
-  if(is_show_) {
+  if(is_show_) { // 创建发布
     centerpoint_pub_ = this->create_publisher<sensor_msgs::msg::Image>(
                                                     pub_topic_name, 10);
     sp_publisher = std::make_shared<Centerpoint_Publisher>(centerpoint_pub_);
@@ -107,14 +107,18 @@ int CenterPoint_Node::PostProcess(
 
   auto sp_centerpoint_node_out = std::dynamic_pointer_cast<CenterPointNodeOutput>(node_output);
   if (sp_centerpoint_node_out) {
-    if (is_show_) {
+    if (is_show_) { // 发布
       sp_publisher->publish(sp_centerpoint_node_out->lidar_files, det_result);
     }
+  } else {
+    RCLCPP_ERROR(rclcpp::get_logger("CenterPoint_Node"),
+                "Pointer cast fail");
   }
   return 0;
 }
 
-void CenterPoint_Node::preprocessRun() {
+// 预处理线程函数
+void CenterPoint_Node::preprocessRun() { 
   for (size_t i = 0; i < local_file_list.size(); i++) {
     if(!rclcpp::ok()) {
       return;
@@ -150,7 +154,7 @@ void CenterPoint_Node::RunLocalFeedInfer() {
   std::string file_path;
   while (std::getline(ifs, lidar_file)) {
     std::string file_path = lidar_pre_path_ + "/" + lidar_file;
-    if (access(file_path.c_str(), F_OK) != 0) {
+    if (access(file_path.c_str(), F_OK) != 0) { // 二进制雷达文件不存在，跳过
       RCLCPP_ERROR_STREAM(rclcpp::get_logger("hobot_centerpoint"),
                       "File is not exist! lidar_file: " << file_path);
       continue;

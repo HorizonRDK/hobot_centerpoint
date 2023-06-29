@@ -19,6 +19,7 @@
 #define PUBIMAGE_WIDTH 1920
 #define PUBIMAGE_HEIGHT 1440
 
+// 读取二进制点云文件
 int read_binary_file(std::string &file_path, char **bin, int *length) {
   std::ifstream ifs(file_path.c_str(), std::ios::in | std::ios::binary);
   if (!ifs) {
@@ -94,7 +95,7 @@ int Centerpoint_Publisher::publish(std::string &pointclude_file, std::shared_ptr
   int centerpoint_y = PUBIMAGE_HEIGHT/2;
   int offset_x = centerpoint_x - selfCar_point_x;
   int offset_y = centerpoint_y - selfCar_point_y;
-  cv::Scalar colorborder(255, 255, 255);
+  cv::Scalar colorborder(255, 255, 255); // 白色填充
   cv::Mat warp_matrix = (cv::Mat_<float>(2, 3) <<
         cos(0), -sin(0), offset_x,
         sin(0), cos(0), offset_y);
@@ -121,6 +122,7 @@ int Centerpoint_Publisher::publish(std::string &pointclude_file, std::shared_ptr
   return 0;
 }
 
+// 加载雷达文件并渲染2d点云图
 int Centerpoint_Publisher::LoadLidarFile(std::string &pointclude_file, cv::Mat &image_,
                       float &width_offset, float &height_offset,
                       int &width_resize, int &height_resize,
@@ -132,13 +134,13 @@ int Centerpoint_Publisher::LoadLidarFile(std::string &pointclude_file, cv::Mat &
     rclcpp::shutdown();
     return -1;
   }
-  int element_size = data_length / 4;
+  int element_size = data_length / 4; // 点云文件中为float数据
   std::vector<float> padding_points(element_size);
   memcpy(padding_points.data(), data_buffer, data_length);
   delete [] data_buffer;
   
   // 2. remove padding
-  int point_num = element_size / 5;
+  int point_num = element_size / 5; // 每个点有五个维度的信息
   std::vector<float> points_y;
   std::vector<float> points_x;
   for (int i = 0; i < point_num; ++i) {
@@ -189,6 +191,7 @@ int Centerpoint_Publisher::LoadLidarFile(std::string &pointclude_file, cv::Mat &
                     (height - (points_x[i] + height_offset)) * height_resize))[2] = 0;
   }
 
+  // 获取自车坐标
   selfCar_point_x = width_offset * width_resize;
   selfCar_point_y = (height - height_offset) * height_resize;
 
@@ -196,6 +199,7 @@ int Centerpoint_Publisher::LoadLidarFile(std::string &pointclude_file, cv::Mat &
   return 0;
 }
 
+// 将检测结果渲染到2d点云图上
 int Centerpoint_Publisher::Draw_perception(std::shared_ptr<Perception> &perception, cv::Mat &image,
                       float &width_offset, float &height_offset, int &width_resize, int &height_resize,int &width, int &height) {
 

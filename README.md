@@ -61,16 +61,36 @@ Getting Started with Hobot CenterPoint Node
 
 ## J5 Ubuntu系统上运行
 
-**准备回灌数据集**
+**数据集处理**
 ```shell
-# 板端下载数据集
+#下载OE开发包
+wget -c ftp://j5ftp@vrftp.horizon.ai/OpenExplorer/v1.1.52a_release/horizon_j5_open_explorer_v1.1.52a-py38_20230605.tar.gz --ftp-password=j5ftp@123$%
+#解压OE
+tar -zxvf horizon_j5_open_explorer_v1.1.52a-py38_20230605.tar.gz -C v1.1.52a
+
+#下载Ubuntu20.04 GPU Docker镜像并加载
+wget -c ftp://j5ftp@vrftp.horizon.ai/OpenExplorer/v1.1.52a_release/docker_openexplorer_ubuntu_20_j5_gpu_v1.1.52a.tar.gz --ftp-password=j5ftp@123$%
+sudo docker load --input docker_openexplorer_ubuntu_20_j5_gpu_v1.1.52a.tar.gz
+
+#启动docker挂载目录
+sudo nvidia-docker run -it --shm-size="15g" -v v1.1.52a:/WORKSPACE openexplorer/ai_toolchain_ubuntu_20_j5_gpu:v1.1.52a /bin/bash
+
+#处理数据集中的激光雷达点云数据
+python3 centerpoint_preprocess.py --data-path=./Nuscenes --save-path=./nuscenes_lidar_val
+#处理脚本在OE包中的路径：OE/ddk/samples/ai_benchmark/j5/qat/tools/eval_preprocess/centerpoint_preprocess.py
+```
+数据集下载参考[工具链文档](https://developer.horizon.ai/api/v1/fileData/horizon_j5_open_explorer_cn_doc/runtime/source/ai_benchmark/source/ai-benchmark.html#nuscenes)
+
+**板端下载回灌文件**
+这里提供了处理好的回灌数据的下载方式，数据集版本v1.0-mini
+```shell
+# 板端下载处理好的二进制雷达文件
 wget http://archive.sunrisepi.tech/TogetheROS/data/hobot_centerpoint_data.tar.gz
 
 # 解压缩
 mkdir config
 tar -zxvf hobot_centerpoint_data.tar.gz -C config
-
-# 解压完成后数据集在config/hobot_centerpoint_data路径下
+# 解压完成后数据在config/hobot_centerpoint_data路径下
 ```
 
 **使用本地数据集回灌**
