@@ -14,6 +14,9 @@ def generate_launch_description():
     lidar_pre_path_launch_arg = DeclareLaunchArgument(
         "lidar_pre_path", default_value=TextSubstitution(text="./config/hobot_centerpoint_data")
     )
+    lidar_list_file_launch_arg = DeclareLaunchArgument(
+        "lidar_list_file", default_value=TextSubstitution(text="./config/nuscenes_lidar_val.lst")
+    )
     is_loop_launch_arg = DeclareLaunchArgument(
         "is_loop", default_value=TextSubstitution(text="False")
     )
@@ -35,7 +38,7 @@ def generate_launch_description():
             {"is_show": True},
             {"is_loop": LaunchConfiguration('is_loop')},
             {"lidar_pre_path": LaunchConfiguration('lidar_pre_path')},
-            {"lidar_list_file": "config/test.lst"}
+            {"lidar_list_file": LaunchConfiguration('lidar_list_file')}
         ],
         arguments=['--ros-args', '--log-level', 'error']
     )
@@ -72,6 +75,7 @@ def generate_launch_description():
 
     return LaunchDescription([
         lidar_pre_path_launch_arg,
+        lidar_list_file_launch_arg,
         is_loop_launch_arg,
         hobot_centerpoint_node,
         # jpeg_codec_node,

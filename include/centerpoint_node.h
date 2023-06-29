@@ -64,7 +64,7 @@ private:
   Model *model;
   std::string model_file_{"config/model/model.hbm"};
   std::string preprocess_config_file_{"config/centerpoint_preprocess_5dim.json"};
-  std::string lidar_list_file_{"config/test.lst"};
+  std::string lidar_list_file_{"config/nuscenes_lidar_val.lst"};
   
   // 雷达文件数据路径
   // lidar_file_path = lidar_pre_path_ + (path in lidar_list_file_)
