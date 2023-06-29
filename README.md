@@ -62,6 +62,8 @@ Getting Started with Hobot CenterPoint Node
 ## J5 Ubuntu系统上运行
 
 **数据集处理**
+数据集下载参考[工具链文档](https://developer.horizon.ai/api/v1/fileData/horizon_j5_open_explorer_cn_doc/runtime/source/ai_benchmark/source/ai-benchmark.html#nuscenes), v1.0-mini版本的数据集需要下载的内容大约有10G
+meta文件夹构造参考[地平线Centerpoint参考算法](https://developer.horizon.ai/forumDetail/163807121354434630)3.1.4章节 meta文件夹构建
 ```shell
 #下载OE开发包
 wget -c ftp://j5ftp@vrftp.horizon.ai/OpenExplorer/v1.1.52a_release/horizon_j5_open_explorer_v1.1.52a-py38_20230605.tar.gz --ftp-password=j5ftp@123$%
@@ -79,7 +81,6 @@ sudo nvidia-docker run -it --shm-size="15g" -v v1.1.52a:/WORKSPACE openexplorer/
 python3 centerpoint_preprocess.py --data-path=./Nuscenes --save-path=./nuscenes_lidar_val
 #处理脚本在OE包中的路径：OE/ddk/samples/ai_benchmark/j5/qat/tools/eval_preprocess/centerpoint_preprocess.py
 ```
-数据集下载参考[工具链文档](https://developer.horizon.ai/api/v1/fileData/horizon_j5_open_explorer_cn_doc/runtime/source/ai_benchmark/source/ai-benchmark.html#nuscenes)
 
 **板端下载回灌文件**
 这里提供了处理好的回灌数据的下载方式，数据集版本v1.0-mini

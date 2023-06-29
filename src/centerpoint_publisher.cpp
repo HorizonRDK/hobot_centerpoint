@@ -89,7 +89,7 @@ int Centerpoint_Publisher::publish(std::string &pointclude_file, std::shared_ptr
   LoadLidarFile(pointclude_file, ori_image, width_offset, height_offset, width_resize, height_resize, width, height);
   Draw_perception(perception, ori_image, width_offset, height_offset, width_resize, height_resize, width, height);
 
-  // 画布大小默认为1920 * 1080 ，需要将自车移动到画布最中间位置
+  // 画布大小默认为1920 * 1440 ，需要将自车移动到画布最中间位置
   cv::Mat image(PUBIMAGE_HEIGHT, PUBIMAGE_WIDTH, ori_image.type());
   int centerpoint_x = PUBIMAGE_WIDTH/2;
   int centerpoint_y = PUBIMAGE_HEIGHT/2;
