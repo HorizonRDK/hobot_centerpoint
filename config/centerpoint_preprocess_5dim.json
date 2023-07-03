@@ -1,0 +1,17 @@
+{
+  "dim": 5,
+  "max_num_point": 40000,
+  "max_num_point_pillar": 20,
+  "back": -51.2,
+  "front": 51.2,
+  "right": -51.2,
+  "left": 51.2,
+  "bottom": -5,
+  "top": 3,
+  "r_lower": 0.0,
+  "r_upper": 255.0,
+  "x_scale": 0.2,
+  "y_scale": 0.2,
+  "x_bev_scale": 0.1,
+  "y_bev_scale": 0.1
+}
