@@ -4,6 +4,9 @@ Getting Started with Hobot CenterPoint Node
 
 # 功能介绍
 
+激光雷达目标检测算法示例使用激光雷达点云作为输入，利用BPU进行算法推理，并发布包含点云数据，检测框和目标朝向的渲染图片msg。
+
+CenterPoint为地平线开源的雷达检测模型。模型输出信息包括目标的3D检测框、置信度、类别。支持的目标检测类型包括car、truck、bus、barrier、motorcycle、pedestrian等六大类别。
 
 # 开发环境
 
@@ -36,7 +39,7 @@ Getting Started with Hobot CenterPoint Node
 
 1、编译环境确认
 
-- 在docker中编译，并且docker中已经编译好TROS·B。docker安装、交叉编译、TROS·B编译和部署说明详见[地平线机器人平台用户手册](https://developer.horizon.ai/api/v1/fileData/TogetherROS/quick_start/cross_compile.html#togetherros)。
+- 在docker中编译，并且docker中已经编译好TROS·B。docker安装、交叉编译、TROS·B编译和部署说明详见[TogetheROS.Bot用户手册](https://developer.horizon.ai/api/v1/fileData/documents_tros/quick_start/cross_compile.html#)。
 
 2、编译
 
