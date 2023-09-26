@@ -43,11 +43,14 @@ tar -zxvf hobot_centerpoint_data.tar.gz -C config
 # 配置tros.b环境
 source /opt/tros/setup.bash
 
+# 启动websocket服务
+ros2 launch websocket websocket_service.launch.py
+
 # 启动launch文件
 ros2 launch hobot_centerpoint hobot_centerpoint_websocket.launch.py lidar_pre_path:=config/hobot_centerpoint_data
 ```
 
-启动成功后，打开同一网络电脑的浏览器，访问RDK的IP地址，即可看到算法可视化的实时效果：
+启动成功后，打开同一网络电脑的浏览器，访问RDK的IP地址http://IP:8000（IP为RDK的IP地址），即可看到算法可视化的实时效果：
 
 ![centerpoint](img/centerpoint.gif)
 
