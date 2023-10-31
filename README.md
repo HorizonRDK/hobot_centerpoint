@@ -27,7 +27,7 @@ sudo apt install -y tros-websocket
 
 ```shell
 # 板端下载回灌的点云文件
-wget http://archive.sunrisepi.tech/TogetheROS/data/hobot_centerpoint_data.tar.gz
+wget http://sunrise.horizon.cc/TogetheROS/data/hobot_centerpoint_data.tar.gz
 
 # 解压缩
 mkdir config
