@@ -1,19 +1,21 @@
-# 功能介绍
+English| [简体中文](./README_cn.md)
 
-激光雷达目标检测算法是使用地平线[OpenExplorer](https://developer.horizon.ai/api/v1/fileData/horizon_j5_open_explorer_cn_doc/hat/source/examples/centerpoint.html)在[nuscenes](https://www.nuscenes.org/nuscenes)数据集上训练出来的`CenterPoint`算法模型。
+# Function Introduction
 
-算法输入为32线激光雷达点云数据，输出信息包括目标的3D检测框、置信度、类别。支持的目标检测类型包括car、truck、bus、barrier、motorcycle、pedestrian共六大类别。
+The laser radar target detection algorithm is the `CenterPoint` algorithm model trained on the [OpenExplorer](https://developer.horizon.ai/api/v1/fileData/horizon_j5_open_explorer_cn_doc/hat/source/examples/centerpoint.html) platform using the [nuscenes](https://www.nuscenes.org/nuscenes) dataset.
 
-此示例使用本地激光雷达点云文件作为输入，利用BPU进行算法推理，发布包含点云数据、目标检测框和朝向的渲染图片消息，在PC端浏览器上渲染显示算法结果。
+The algorithm takes 32-line laser radar point cloud data as input and outputs information including 3D detection boxes of targets, confidence, and category. Supported target detection types include car, truck, bus, barrier, motorcycle, and pedestrian, totaling six major categories.
 
-# 物料清单
+This example uses local laser radar point cloud files as input, utilizes BPU for algorithm inference, and publishes rendered images containing point cloud data, target detection boxes, and orientation messages, displaying algorithm results on the PC browser.
+
+# Bill of Materials
 
 
-# 使用方法
+# Usage
 
-## 功能安装
+## Function Installation
 
-在RDK系统的终端中运行如下指令，即可快速安装：
+Run the following commands in the terminal of the RDK system for quick installation:
 
 ```bash
 sudo apt update
@@ -21,54 +23,54 @@ sudo apt install -y tros-hobot-centerpoint
 sudo apt install -y tros-websocket
 ```
 
-## 准备回灌数据集
+## Prepare the Back-Injection Dataset
 
-在RDK系统的终端中运行如下指令，下载并解压数据集：
+Run the following commands in the terminal of the RDK system to download and unzip the dataset:
 
 ```shell
-# 板端下载回灌的点云文件
+# Download the point cloud file for back-injection on the board side
 wget http://sunrise.horizon.cc/TogetheROS/data/hobot_centerpoint_data.tar.gz
 
-# 解压缩
+# Unzip
 mkdir config
 tar -zxvf hobot_centerpoint_data.tar.gz -C config
-# 解压完成后数据在config/hobot_centerpoint_data路径下
+# After unzipping, the data is located in the config/hobot_centerpoint_data path
 ```
 
-## 启动算法和图像可视化
+## Start the Algorithm and Image Visualization
 
-在RDK系统的终端中运行如下指令，启动算法和可视化：
+Run the following commands in the terminal of the RDK system to start the algorithm and visualization:
 
 ```shell
-# 配置tros.b环境
+# Configure the tros.b environment
 source /opt/tros/setup.bash
 
-# 启动websocket服务
+# Start the websocket service
 ros2 launch websocket websocket_service.launch.py
 
-# 启动launch文件
+# Launch the file
 ros2 launch hobot_centerpoint hobot_centerpoint_websocket.launch.py lidar_pre_path:=config/hobot_centerpoint_data
-```
-
-启动成功后，打开同一网络电脑的浏览器，访问RDK的IP地址http://IP:8000（IP为RDK的IP地址），即可看到算法可视化的实时效果：
+``````
+After successful startup, open the browser on the same network computer and access the IP address of RDK http://IP:8000 (IP is the IP address of RDK), you can see the real-time visual effect of the algorithm:
 
 ![centerpoint](img/centerpoint.gif)
 
 
-# 接口说明
+# Interface Description
 
-## 话题
+## Topics
 
-| 名称         | 消息类型                             | 说明                                     |
-| ------------ | ------------------------------------ | ---------------------------------------- |
-| /hobot_centerpoint  | sensor_msgs/msg/Image                | 周期发布的图像话题，jpeg格式             |
+| Name              | Message Type                       | Description                              |
+| ----------------- | ---------------------------------- | ---------------------------------------- |
+| /hobot_centerpoint  | sensor_msgs/msg/Image               | Periodically publishes image topics in jpeg format  |
 
-## 参数
+## Parameters
 
-| 名称                         | 参数值                                          | 说明                                               |
-| ---------------------------- | ----------------------------------------------- | -------------------------------------------------- |
-| lidar_pre_path                 | 使用回灌数据集实际所在路径，默认./config/hobot_centerpoint_data | 回灌数据集路径                         |
-| lidar_list_file                 | 使用回灌数据集实际文件名，默认./config/nuscenes_lidar_val.lst | 回灌数据列表                         |
-| is_loop                 | True（默认）/False | 是否发布渲染后图片                         |
+| Name                          | Parameter Value                                | Description                                     |
+| ----------------------------- | ---------------------------------------------- | ------------------------------------------------ |
+| lidar_pre_path                 | The actual path of the playback dataset used, default is ./config/hobot_centerpoint_data | Playback dataset path                |
+| lidar_list_file                 | The actual file name of the playback dataset used, default is ./config/nuscenes_lidar_val.lst | Playback data list                 |
+| is_loop                 | True (default)/False | Whether to publish the rendered image                 |
 
-# 常见问题
+# FAQ
+```
