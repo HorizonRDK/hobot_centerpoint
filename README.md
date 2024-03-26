@@ -73,4 +73,3 @@ After successful startup, open the browser on the same network computer and acce
 | is_loop                 | True (default)/False | Whether to publish the rendered image                 |
 
 # FAQ
-```
